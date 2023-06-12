@@ -1,6 +1,6 @@
 from pydantic import BaseModel,EmailStr,Field
 from uuid import UUID
-from typing import Optional
+from typing import Optional,List
 
 
 #Informations qui seront entrées par les utilisateurs
@@ -20,3 +20,10 @@ class userOut(BaseModel):
     first_name:str
     last_name:str
     rule:str
+
+class pagination_usr(BaseModel):
+    list_book:List[userOut]
+    total:int=0
+    count:int=0
+    previous_page:str=None
+    next_page:str=None

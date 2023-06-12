@@ -1,7 +1,7 @@
 from app.models.user_model import user
-from app.schemas.book_schema import bookIn,bookOut
+from app.schemas.book_schema import bookIn
 from app.models.book_model import book
-from typing import List,Any
+from typing import List
 from fastapi import HTTPException,status
 
 
@@ -35,45 +35,3 @@ async def find_all_books()->List[book]:
             detail="Books not found"
         )
     else: return books
-
-"""async def pagging_data(bks: List[bookOut],page: int=1,size: int=5)-> dict:
-    start=(page-1)*size
-    end=start+size
-    length_bks=len(bks)
-    response={
-        "data":bks[start:end],
-        "total":length_bks,
-        "count":size,
-        "pagination":{}
-    }
-    return response"""
-
-
-def read_bks(bks: List[bookOut],page: int=1,size: int=5):
-    start=(page-1)*size
-    end=start+size
-    len_bks=len(bks)
-    
-    response={
-        "data":bks[start:end],
-        "total":len_bks,
-        "count":size,
-        "pagination":{}
-    }
-    
-    if end>=len_bks:
-        response["pagination"]["next"]=None
-        
-        if page>1:
-            response["pagination"]["previous"]=f"posts?page_num={page-1}&page_size={size}"
-        else:
-            response["pagination"]["previous"]=None
-    else:
-        if page>1:
-            response["pagination"]["previous"]=f"posts?page_num={page-1}&page_size={size}"
-        else:
-            response["pagination"]["previous"]=None
-        
-        response["pagination"]["next"]=f"posts?page_num={page+1}&page_size={size}"
-    
-    return response
