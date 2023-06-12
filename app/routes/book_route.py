@@ -5,10 +5,8 @@ from app.models.user_model import user
 from app.dependencies.user_deps import get_current_user
 from app.book_operations.book_operation import new_book,find_books_for_users,find_all_books,find_book,read_bks
 from datetime import datetime
-from typing import List,Dict
+from typing import List
 from app.cnx_config.config import settings
-from pymongo import MongoClient
-import json
 
 
 book_route=APIRouter()
@@ -18,21 +16,17 @@ book_route=APIRouter()
 async def create_book(Book:bookIn,owner:user=Depends(get_current_user)):
     return await new_book(Book,owner)
 
-@book_route.get("/get_book",summary="Get a book")
-async def get_book(booknameOrauthors:str,page:int=1,size: int=1)-> Dict[str,bookOut]:
+@book_route.get("/get_book={booknameOrauthors}",summary="Get a book",response_model=List[bookOut])
+async def get_book(booknameOrauthors:str):
     retrieve_book=await find_book(booknameOrauthors)
     for bk in retrieve_book:
         bk.view+=1
         await bk.update({"$set":bk.dict(exclude_unset=True)})
-    client=MongoClient("mongodb://localhost:27017/")
-    db=client["Booking"]
-    col=db["books"]
-    #print(f"type : {col.find_one()}")
-    x=col.find_one()
-    return {"message":x}
+    
+    return retrieve_book
 
-@book_route.get("/get_books_for_user",summary="Get all user's books")
-async def get_books_for_user(page: int=1,size: int=5,User:user=Depends(get_current_user)):
+@book_route.get("/get_books_for_user={User}",summary="Get all user's books")
+async def get_books_for_user(User:user=Depends(get_current_user)):
     books=await find_books_for_users(User)
 
 @book_route.get("/get_all_books",summary="Get all books",response_model=List[bookOut])
@@ -45,7 +39,7 @@ async def get_all_books(User:user=Depends(get_current_user)):
             detail="Requires administrator rights"
         )
 
-@book_route.get("/get_limited_books",summary="Get limited books",response_model=List[bookOut])
+@book_route.get("/get_limited_books/user={User}",summary="Get limited books",response_model=List[bookOut])
 async def get_limited_books(User:user=Depends(get_current_user),number:int=1):
     if(User.rule=="admin"):
         books= await find_all_books()
@@ -59,7 +53,7 @@ async def get_limited_books(User:user=Depends(get_current_user),number:int=1):
             detail="Requires administrator rights"
         )
 
-@book_route.put("/update_book",summary="update user's books",response_model=bookOut)
+@book_route.put("/update_book={book_name}",summary="update user's books",response_model=bookOut)
 async def update_book(bk:bookIn,book_name:str,User:user=Depends(get_current_user)):
     last_bk=await find_book(book_name,User)
     new_bk=book(id=bk.id,
@@ -74,13 +68,13 @@ async def update_book(bk:bookIn,book_name:str,User:user=Depends(get_current_user
     await last_bk.update({"$set":new_bk.dict(exclude_unset=True)})
     return last_bk
 
-@book_route.delete("/delete_book",summary="delete the user's book")
+@book_route.delete("/delete_book={book_name}",summary="delete the user's book")
 async def delete_book(book_name:str,User:user=Depends(get_current_user)):
     bk=await find_book(book_name,User)
     await bk.delete()
     return {"message":"successfully deleted"}
 
-@book_route.post("/buy_book",summary="buy the book")
+@book_route.post("/buy_book={book_name}",summary="buy the book")
 async def buy_book(book_name: str):
     bk=await book.find_one(book.book_name==book_name)
     bk.books_sold+=1
