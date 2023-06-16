@@ -7,6 +7,7 @@ from app.dependencies.user_deps import get_current_user
 from pydantic import EmailStr
 from datetime import datetime
 from typing import List
+from math import ceil
 
 user_route = APIRouter()
 
@@ -35,11 +36,6 @@ async def get_users(User:user=Depends(get_current_user),page: int=1,size: int=10
         start=(page-1)*size
         end=start+size
 
-        if end>len_books:
-            raise HTTPException(
-                status_code=404,
-                detail="List of user not found"
-            )
         if end==len_books:
             next_page=None
         
@@ -53,12 +49,15 @@ async def get_users(User:user=Depends(get_current_user),page: int=1,size: int=10
             else:
                 previous_page=None
         
+        if end>len_books:
+            next_page=None
+        
             next_page=f"http://127.0.0.1:8000/api/book/get_all_users/page={page+1}&size={size}"
         
         response_page=pagination_usr(
             list_book=retrieve_user[start:end],
             total=len_books,
-            count=len_books/size,
+            count=ceil(len_books/size),
             previous_page=previous_page,
             next_page=next_page
         )
@@ -82,11 +81,6 @@ async def get_limited_users(User:user=Depends(get_current_user),page: int=1,size
         start=(page-1)*size
         end=start+size
 
-        if end>len_books:
-            raise HTTPException(
-                status_code=404,
-                detail="List of user not found"
-            )
         if end==len_books:
             next_page=None
         
@@ -102,10 +96,13 @@ async def get_limited_users(User:user=Depends(get_current_user),page: int=1,size
         
             next_page=f"http://127.0.0.1:8000/api/book/get_all_users/page={page+1}&size={size}"
         
+        if end>len_books:
+            next_page=None
+        
         response_page=pagination_usr(
             list_book=limited_users[start:end],
             total=len_books,
-            count=len_books/size,
+            count=ceil(len_books/size),
             previous_page=previous_page,
             next_page=next_page
         )
