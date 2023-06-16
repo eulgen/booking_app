@@ -2,7 +2,6 @@ from fastapi import HTTPException,status
 from app.schemas.user_schema import userIn
 from app.models.user_model import user
 from app.security.security import get_password,verify_password
-from pymongo import errors
 from pydantic import EmailStr
 from typing import List,Optional
 from uuid import UUID

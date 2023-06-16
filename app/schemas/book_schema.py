@@ -25,6 +25,6 @@ class bookOut(BaseModel):
 class pagination_bk(BaseModel):
     list_book:List[bookOut]
     total:int=0
-    count:int=0
+    total_page:int=0
     previous_page:str=None
     next_page:str=None

@@ -7,6 +7,7 @@ from app.book_operations.book_operation import new_book,find_books_for_users,fin
 from datetime import datetime
 from typing import List,Dict
 from app.cnx_config.config import settings
+from math import ceil
 
 
 book_route=APIRouter()
@@ -49,7 +50,7 @@ async def get_book(booknameOrauthors:str,page:int=1,size:int=10):
     response_page=pagination_bk(
         list_book=retrieve_book[start:end],
         total=len_books,
-        count=len_books/size,
+        total_page=len_books/size,
         previous_page=previous_page,
         next_page=next_page
     )
@@ -62,11 +63,6 @@ async def get_books_for_user(User:user=Depends(get_current_user),page: int=1,siz
     start=(page-1)*size
     end=start+size
 
-    if end>len_books:
-        raise HTTPException(
-            status_code=404,
-            detail="List of book not found"
-        )
     if end==len_books:
         next_page=None
     
@@ -81,13 +77,21 @@ async def get_books_for_user(User:user=Depends(get_current_user),page: int=1,siz
             previous_page=None
     
         next_page=f"http://127.0.0.1:8000/api/book/get_books_for_user/page={page+1}&size={size}"
+    if end>len_books:
+            next_page=None
+
     response_page=pagination_bk(
-    list_book=books[start:end],
-    total=len_books,
-    count=len_books/size,
-    previous_page=previous_page,
-    next_page=next_page
+        list_book=books[start:end],
+        total=len_books,
+        total_page=ceil(len_books/size),
+        previous_page=previous_page,
+        next_page=next_page
     )
+    
+    if(response_page.total_page<page):raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid page"
+        )
     
     return response_page
 
@@ -99,11 +103,6 @@ async def get_all_books(User:user=Depends(get_current_user),page:int=1,size:int=
         start=(page-1)*size
         end=start+size
 
-        if end>len_books:
-            raise HTTPException(
-                status_code=404,
-                detail="List of book not found"
-            )
         if end==len_books:
             next_page=None
         
@@ -118,12 +117,19 @@ async def get_all_books(User:user=Depends(get_current_user),page:int=1,size:int=
                 previous_page=None
         
             next_page=f"http://127.0.0.1:8000/api/book/get_all_books/page={page+1}&size={size}"
+        if end>len_books:
+            next_page=None
+
         response_page=pagination_bk(
-        list_book=books[start:end],
-        total=len_books,
-        count=len_books/size,
-        previous_page=previous_page,
-        next_page=next_page
+            list_book=books[start:end],
+            total=len_books,
+            total_page=ceil(len_books/size),
+            previous_page=previous_page,
+            next_page=next_page
+        )
+        if(response_page.total_page<page):raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid page"
         )
         return response_page
 
@@ -133,25 +139,16 @@ async def get_all_books(User:user=Depends(get_current_user),page:int=1,size:int=
             detail="Requires administrator rights"
         )
 
-@book_route.get("/get_limited_books",summary="Get limited books",response_model=pagination_bk)
+"""@book_route.get("/get_limited_books",summary="Get limited books",response_model=pagination_bk)
 async def get_limited_books(User:user=Depends(get_current_user),size:int=10,page:int=1):
     if(User.rule=="admin"):
         books= await find_all_books()
-        limited_books=[]
-        for i in range(size):
-            limited_books.append(books[i])
-        len_books=len(limited_books)
+        len_books=len(books)
         start=(page-1)*size
         end=start+size
 
-        if end>len_books:
-            raise HTTPException(
-                status_code=404,
-                detail="List of book not found"
-            )
         if end==len_books:
             next_page=None
-        
             if page>1:
                 previous_page=f"http://127.0.0.1:8000/api/book/get_limited_books/page={page-1}&size={size}"
             else:
@@ -163,12 +160,20 @@ async def get_limited_books(User:user=Depends(get_current_user),size:int=10,page
                 previous_page=None
         
             next_page=f"http://127.0.0.1:8000/api/book/get_limited_books/page={page+1}&size={size}"
+
+        if end>len_books:
+            next_page=None
+
         response_page=pagination_bk(
-        list_book=limited_books[start:end],
-        total=len_books,
-        count=len_books/size,
-        previous_page=previous_page,
-        next_page=next_page
+            list_book=books[start:end],
+            total=len_books,
+            total_page=ceil(len_books/size),
+            previous_page=previous_page,
+            next_page=next_page
+        )
+        if(response_page.total_page<page):raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid page"
         )
         return response_page
 
@@ -176,7 +181,7 @@ async def get_limited_books(User:user=Depends(get_current_user),size:int=10,page
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Requires administrator rights"
-        )
+        )"""
 
 @book_route.put("/update_book={book_name}",summary="update user's books",response_model=bookOut)
 async def update_book(bk:bookIn,book_name:str,User:user=Depends(get_current_user)):

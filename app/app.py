@@ -11,9 +11,9 @@ app = FastAPI(
     version=settings.VERSION
 )
 
-"""@app.get("/")
+@app.get("/")
 def hello():
-    return {"message":"hello world"}"""
+    return {"message":"hello world"}
 
 # `@app.on_event("startup")` is a decorator in FastAPI that registers a function to be executed when
 # the application starts up. In this case, the function `app_init()` is registered to initialize

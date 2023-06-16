@@ -19,7 +19,8 @@ async def find_book(booknameOrauthors:str)->List[book]:
     return found_bk
 
 async def find_books_for_users(User:user)->List[book]:
-    books=await book.find(book.owner.user_id==User.user_id).to_list()
+    books=await book.find(book.owner.id==User.id).to_list()
+    print(f"len books:{len(books)}\n")
     if len(books)==0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
